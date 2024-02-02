@@ -77,9 +77,24 @@ router.get('/getbyid/:id', async (req, res) => {
 router.delete('/delete/:id', async (req, res) => {
     try {
         // Extracting the event ID from the request parameters
-        myId = req.params.id;
-        // Deleting the event by ID from the database
-        deletedEvent = await Event.findByIdAndDelete({ _id: myId });
+        const myId = req.params.id;
+        // Finding the event by ID in the database
+        const deletedEvent = await Event.findByIdAndDelete({ _id: myId });
+        
+        // If an event is found and it has an associated image filename
+        if (deletedEvent && deletedEvent.image) {
+            // Delete the corresponding image file from the storage
+            const fs = require('fs');
+            const imagePath = './uploads/' + deletedEvent.image;
+            fs.unlink(imagePath, (err) => {
+                if (err) {
+                    console.error('Error deleting image file:', err);
+                } else {
+                    console.log('Image file deleted successfully');
+                }
+            });
+        }
+
         // Sending the deleted event as a response
         res.status(200).send(deletedEvent);
     } catch (error) {
